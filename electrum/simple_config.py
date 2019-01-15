@@ -18,7 +18,6 @@ from .i18n import _
 FEE_ETA_TARGETS = [25, 10, 5, 2]
 FEE_DEPTH_TARGETS = [10000000, 5000000, 2000000, 1000000, 500000, 200000, 100000]
 
-FEERATE_MAX_DYNAMIC = 1000000
 FEERATE_WARNING_HIGH_FEE = 10000000
 FEERATE_FALLBACK_STATIC_FEE = 1000000
 FEERATE_DEFAULT_RELAY = 1000000
@@ -297,7 +296,7 @@ class SimpleConfig(PrintError):
             fee = func(self, *args, **kwargs)
             if fee is None:
                 return fee
-            fee = min(FEERATE_MAX_DYNAMIC, fee)
+            fee = min(FEERATE_DEFAULT_RELAY, fee)
             fee = max(FEERATE_DEFAULT_RELAY, fee)
             return fee
         return get_fee_within_limits
@@ -474,7 +473,7 @@ class SimpleConfig(PrintError):
             return self.has_fee_etas()
 
     def is_dynfee(self):
-        return bool(self.get('dynamic_fees', True))
+        return False
 
     def use_mempool_fees(self):
         return bool(self.get('mempool_fees', False))
@@ -493,7 +492,7 @@ class SimpleConfig(PrintError):
             fee_rate = FEERATE_STATIC_VALUES[slider_pos]
         return fee_rate
 
-    def fee_per_kb(self, mempool: bool=None) -> int:
+    def fee_per_kb(self, dyn=False, mempool: bool=None) -> int:
         """Returns sat/kvB fee to pay for a txn."""
 
         fee_rate = self.get('fee_per_kb', FEERATE_FALLBACK_STATIC_FEE)
@@ -513,7 +512,7 @@ class SimpleConfig(PrintError):
         return self.estimate_fee_for_feerate(fee_per_kb, size)
 
     @classmethod
-    def estimate_fee_for_feerate(cls, fee_per_kb, size):
+    def estimate_fee_for_feerate(cls, size):
         return int(1000000 * math.ceil(size / 1000))
 
     def update_fee_estimates(self, key, value):
