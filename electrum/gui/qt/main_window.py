@@ -1207,8 +1207,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     _('To somewhat protect your privacy, Electrum tries to create change with similar precision to other outputs.') + ' ' +
                     _('At most 100 satoshis might be lost due to this rounding.') + ' ' +
                     _("You can disable this setting in '{}'.").format(_('Preferences')) + '\n' +
-                    _('Also, dust is not kept as change, but added to the fee.')  + '\n' +
-                    _('Also, when batching RBF transactions, BIP 125 imposes a lower bound on the fee.'))
+                    _('Also, dust is not kept as change, but added to the fee.')
+                    #_('Also, when batching RBF transactions, BIP 125 imposes a lower bound on the fee.')
+                    )
             QMessageBox.information(self, 'Fee rounding', text)
 
         self.feerounding_icon = QPushButton(QIcon(':icons/info.png'), '')
@@ -1575,9 +1576,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         amount = tx.output_value() if self.is_max else sum(map(lambda x:x[2], outputs))
         fee = tx.get_fee()
 
+        """
         use_rbf = self.config.get('use_rbf', True)
         if use_rbf:
             tx.set_rbf(True)
+        """
 
         if fee < self.wallet.relayfee() * tx.estimated_size() / 1000:
             self.show_error('\n'.join([
@@ -2764,6 +2767,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         feebox_cb.stateChanged.connect(on_feebox)
         fee_widgets.append((feebox_cb, None))
 
+        """
         use_rbf = self.config.get('use_rbf', True)
         use_rbf_cb = QCheckBox(_('Use Replace-By-Fee'))
         use_rbf_cb.setChecked(use_rbf)
@@ -2787,6 +2791,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.config.set_key('batch_rbf', bool(x))
         batch_rbf_cb.stateChanged.connect(on_batch_rbf)
         fee_widgets.append((batch_rbf_cb, None))
+        """
 
         msg = _('OpenAlias record, used to receive coins and to sign payment requests.') + '\n\n'\
               + _('The following alias providers are available:') + '\n'\
@@ -3255,7 +3260,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_error(_('Max fee exceeded'))
             return
         new_tx = self.wallet.cpfp(parent_tx, fee)
-        new_tx.set_rbf(True)
+        #new_tx.set_rbf(True)
         self.show_transaction(new_tx)
 
     def bump_fee_dialog(self, tx):
@@ -3295,8 +3300,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         except CannotBumpFee as e:
             self.show_error(str(e))
             return
-        if is_final:
-            new_tx.set_rbf(False)
+        #if is_final:
+        #    new_tx.set_rbf(False)
         self.show_transaction(new_tx, tx_label)
 
     def save_transaction_into_wallet(self, tx):
