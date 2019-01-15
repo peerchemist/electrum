@@ -54,7 +54,7 @@ class BitcoinMainnet(AbstractNet):
     GENESIS = "0000000032fe677166d54963b62a4677d8957e87c508eaa4fd7eb1c880cd27e3"
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
     DEFAULT_SERVERS = read_json('servers.json', {})
-    CHECKPOINTS = read_json('checkpoints.json', [])
+    CHECKPOINTS = read_json('checkpoints.json', {})
 
     XPRV_HEADERS = {
         'standard':    0x0488ade4,  # xprv
