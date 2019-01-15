@@ -612,65 +612,23 @@ def time_difference(distance_in_time, include_seconds):
     else:
         return "over %d years" % (round(distance_in_minutes / 525600))
 
+
 mainnet_block_explorers = {
-    'Bitupper Explorer': ('https://bitupper.com/en/explorer/bitcoin/',
-                        {'tx': 'transactions/', 'addr': 'addresses/'}),
-    'Biteasy.com': ('https://www.biteasy.com/blockchain/',
-                        {'tx': 'transactions/', 'addr': 'addresses/'}),
-    'Bitflyer.jp': ('https://chainflyer.bitflyer.jp/',
-                        {'tx': 'Transaction/', 'addr': 'Address/'}),
-    'Blockchain.info': ('https://blockchain.info/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'blockchainbdgpzk.onion': ('https://blockchainbdgpzk.onion/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockr.io': ('https://btc.blockr.io/',
-                        {'tx': 'tx/info/', 'addr': 'address/info/'}),
-    'Blockstream.info': ('https://blockstream.info/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blocktrail.com': ('https://www.blocktrail.com/BTC/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'BTC.com': ('https://chain.btc.com/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Chain.so': ('https://www.chain.so/',
-                        {'tx': 'tx/BTC/', 'addr': 'address/BTC/'}),
-    'Insight.is': ('https://insight.bitpay.com/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'TradeBlock.com': ('https://tradeblock.com/blockchain/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'BlockCypher.com': ('https://live.blockcypher.com/btc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockchair.com': ('https://blockchair.com/bitcoin/',
-                        {'tx': 'transaction/', 'addr': 'address/'}),
-    'blockonomics.co': ('https://www.blockonomics.co/',
-                        {'tx': 'api/tx?txid=', 'addr': '#/search?q='}),
-    'OXT.me': ('https://oxt.me/',
-                        {'tx': 'transaction/', 'addr': 'address/'}),
-    'smartbit.com.au': ('https://www.smartbit.com.au/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'system default': ('blockchain:/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
+
+    'Explorer': ('https://explorer.peercoin.net/',
+                        {'tx': 'tx/', 'addr': 'address/'})
 }
 
 testnet_block_explorers = {
-    'Blocktrail.com': ('https://www.blocktrail.com/tBTC/',
-                       {'tx': 'tx/', 'addr': 'address/'}),
-    'BlockCypher.com': ('https://live.blockcypher.com/btc-testnet/',
-                       {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockchain.info': ('https://testnet.blockchain.info/',
-                       {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockstream.info': ('https://blockstream.info/testnet/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'BTC.com': ('https://tchain.btc.com/',
-                       {'tx': '', 'addr': ''}),
-    'smartbit.com.au': ('https://testnet.smartbit.com.au/',
-                       {'tx': 'tx/', 'addr': 'address/'}),
-    'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
-                       {'tx': 'tx/', 'addr': 'address/'}),
+    'Explorer': ('https://testnet-explorer.peercoin.net/',
+                       {'tx': 'tx/', 'addr': 'address/'})
 }
+
 
 def block_explorer_info():
     from . import constants
     return mainnet_block_explorers if not constants.net.TESTNET else testnet_block_explorers
+
 
 def block_explorer(config: 'SimpleConfig') -> str:
     from . import constants
@@ -679,8 +637,10 @@ def block_explorer(config: 'SimpleConfig') -> str:
     be = block_explorer_info().get(be_key)
     return be_key if be is not None else default_
 
+
 def block_explorer_tuple(config: 'SimpleConfig') -> Optional[Tuple[str, dict]]:
     return block_explorer_info().get(block_explorer(config))
+
 
 def block_explorer_URL(config: 'SimpleConfig', kind: str, item: str) -> Optional[str]:
     be_tuple = block_explorer_tuple(config)
