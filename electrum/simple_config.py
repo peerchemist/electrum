@@ -301,154 +301,41 @@ class SimpleConfig(PrintError):
             return fee
         return get_fee_within_limits
 
-    def eta_to_fee(self, slider_pos) -> Optional[int]:
-        """Returns fee in sat/kbyte."""
-        slider_pos = max(slider_pos, 0)
-        slider_pos = min(slider_pos, len(FEE_ETA_TARGETS))
-        if slider_pos < len(FEE_ETA_TARGETS):
-            num_blocks = FEE_ETA_TARGETS[slider_pos]
-            fee = self.eta_target_to_fee(num_blocks)
-        else:
-            fee = self.eta_target_to_fee(1)
-        return fee
-
-    @impose_hard_limits_on_fee
-    def eta_target_to_fee(self, num_blocks: int) -> Optional[int]:
-        """Returns fee in sat/kbyte."""
-        if num_blocks == 1:
-            fee = self.fee_estimates.get(2)
-            if fee is not None:
-                fee += fee / 2
-                fee = int(fee)
-        else:
-            fee = self.fee_estimates.get(num_blocks)
-        return fee
-
-    def fee_to_depth(self, target_fee: Real) -> int:
-        """For a given sat/vbyte fee, returns an estimate of how deep
-        it would be in the current mempool in vbytes.
-        Pessimistic == overestimates the depth.
-        """
-        depth = 0
-        for fee, s in self.mempool_fees:
-            depth += s
-            if fee <= target_fee:
-                break
-        return depth
-
-    def depth_to_fee(self, slider_pos) -> int:
-        """Returns fee in sat/kbyte."""
-        target = self.depth_target(slider_pos)
-        return self.depth_target_to_fee(target)
-
-    @impose_hard_limits_on_fee
-    def depth_target_to_fee(self, target: int) -> int:
-        """Returns fee in sat/kbyte.
-        target: desired mempool depth in vbytes
-        """
-        depth = 0
-        for fee, s in self.mempool_fees:
-            depth += s
-            if depth > target:
-                break
-        else:
-            return 0
-        # add one sat/byte as currently that is
-        # the max precision of the histogram
-        fee += 1
-        # convert to sat/kbyte
-        return fee * 1000
-
-    def depth_target(self, slider_pos):
-        slider_pos = max(slider_pos, 0)
-        slider_pos = min(slider_pos, len(FEE_DEPTH_TARGETS)-1)
-        return FEE_DEPTH_TARGETS[slider_pos]
-
-    def eta_target(self, i):
-        if i == len(FEE_ETA_TARGETS):
-            return 1
-        return FEE_ETA_TARGETS[i]
-
-    def fee_to_eta(self, fee_per_kb):
-        import operator
-        l = list(self.fee_estimates.items()) + [(1, self.eta_to_fee(4))]
-        dist = map(lambda x: (x[0], abs(x[1] - fee_per_kb)), l)
-        min_target, min_value = min(dist, key=operator.itemgetter(1))
-        if fee_per_kb < self.fee_estimates.get(25)/2:
-            min_target = -1
-        return min_target
-
-    def depth_tooltip(self, depth):
-        return "%.1f MB from tip"%(depth/1000000)
-
-    def eta_tooltip(self, x):
-        if x < 0:
-            return _('Low fee')
-        elif x == 1:
-            return _('In the next block')
-        else:
-            return _('Within {} blocks').format(x)
-
     def get_fee_status(self):
-        dyn = self.is_dynfee()
-        mempool = self.use_mempool_fees()
-        pos = self.get_depth_level() if mempool else self.get_fee_level()
-        fee_rate = self.fee_per_kb()
-        target, tooltip = self.get_fee_text(pos, dyn, mempool, fee_rate)
-        return tooltip + '  [%s]'%target if dyn else target + '  [Static]'
 
-    def get_fee_text(self, pos, dyn, mempool, fee_rate):
+        pos = self.get_fee_level()
+        fee_rate = self.fee_per_kb()
+        target, tooltip = self.get_fee_text(pos, fee_rate)
+
+        return tooltip + target + '  [Static]'
+
+    def get_fee_text(self, pos, fee_rate):
         """Returns (text, tooltip) where
         text is what we target: static fee / num blocks to confirm in / mempool depth
         tooltip is the corresponding estimate (e.g. num blocks for a static fee)
         """
+
         if fee_rate is None:
             rate_str = 'unknown'
         else:
             rate_str = format_fee_satoshis(fee_rate/1000) + ' sat/byte'
 
-        if dyn:
-            if mempool:
-                depth = self.depth_target(pos)
-                text = self.depth_tooltip(depth)
-            else:
-                eta = self.eta_target(pos)
-                text = self.eta_tooltip(eta)
-            tooltip = rate_str
-        else:
-            text = rate_str
-            if mempool and self.has_fee_mempool():
-                depth = self.fee_to_depth(fee_rate)
-                tooltip = self.depth_tooltip(depth)
-            elif not mempool and self.has_fee_etas():
-                eta = self.fee_to_eta(fee_rate)
-                tooltip = self.eta_tooltip(eta)
-            else:
-                tooltip = ''
-        return text, tooltip
+        text = rate_str
 
-    def get_depth_level(self):
-        maxp = len(FEE_DEPTH_TARGETS) - 1
-        return min(maxp, self.get('depth_level', 2))
+        tooltip = ''
+
+        return text, tooltip
 
     def get_fee_level(self):
         maxp = len(FEE_ETA_TARGETS)  # not (-1) to have "next block"
         return min(maxp, self.get('fee_level', 2))
 
-    def get_fee_slider(self, dyn, mempool):
-        if dyn:
-            if mempool:
-                pos = self.get_depth_level()
-                maxp = len(FEE_DEPTH_TARGETS) - 1
-                fee_rate = self.depth_to_fee(pos)
-            else:
-                pos = self.get_fee_level()
-                maxp = len(FEE_ETA_TARGETS)  # not (-1) to have "next block"
-                fee_rate = self.eta_to_fee(pos)
-        else:
-            fee_rate = self.fee_per_kb(dyn=False)
-            pos = self.static_fee_index(fee_rate)
-            maxp = len(FEERATE_STATIC_VALUES) - 1
+    def get_fee_slider(self):
+
+        fee_rate = self.fee_per_kb()
+        pos = self.static_fee_index(fee_rate)
+        maxp = len(FEERATE_STATIC_VALUES) - 1
+
         return maxp, pos, fee_rate
 
     def static_fee(self, i):
@@ -459,24 +346,6 @@ class SimpleConfig(PrintError):
             raise TypeError('static fee cannot be None')
         dist = list(map(lambda x: abs(x - value), FEERATE_STATIC_VALUES))
         return min(range(len(dist)), key=dist.__getitem__)
-
-    def has_fee_etas(self):
-        return len(self.fee_estimates) == 4
-
-    def has_fee_mempool(self):
-        return bool(self.mempool_fees)
-
-    def has_dynamic_fees_ready(self):
-        if self.use_mempool_fees():
-            return self.has_fee_mempool()
-        else:
-            return self.has_fee_etas()
-
-    def is_dynfee(self):
-        return False
-
-    def use_mempool_fees(self):
-        return bool(self.get('mempool_fees', False))
 
     def _feerate_from_fractional_slider_position(self, fee_level: float, dyn: bool,
                                                  mempool: bool) -> Union[int, None]:
