@@ -21,7 +21,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import binascii
-import os, sys, re, json
+import os, sys, re
 from collections import defaultdict, OrderedDict
 from typing import NamedTuple, Union, TYPE_CHECKING, Tuple, Optional, Callable
 from datetime import datetime
@@ -38,7 +38,6 @@ import urllib.request, urllib.parse, urllib.error
 import builtins
 import json
 import time
-from typing import NamedTuple, Optional
 import ssl
 
 import aiohttp
