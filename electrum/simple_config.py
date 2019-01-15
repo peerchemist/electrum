@@ -503,7 +503,8 @@ class SimpleConfig(PrintError):
     def fee_per_byte(self):
         """Returns sat/vB fee to pay for a txn."""
 
-        return int(1000000 * math.ceil(size / 1000))
+        fee_per_kb = self.fee_per_kb()
+        return fee_per_kb / 1000 if fee_per_kb is not None else None
 
     def estimate_fee(self, size):
         fee_per_kb = self.fee_per_kb()
@@ -513,12 +514,7 @@ class SimpleConfig(PrintError):
 
     @classmethod
     def estimate_fee_for_feerate(cls, fee_per_kb, size):
-        fee_per_kb = Decimal(fee_per_kb)
-        fee_per_byte = fee_per_kb / 1000
-        # to be consistent with what is displayed in the GUI,
-        # the calculation needs to use the same precision:
-        fee_per_byte = quantize_feerate(fee_per_byte)
-        return round(fee_per_byte * size)
+        return int(1000000 * math.ceil(size / 1000))
 
     def update_fee_estimates(self, key, value):
         self.fee_estimates[key] = value
