@@ -626,6 +626,7 @@ def deserialize(raw: str, force_full_parse=False) -> dict:
     vds = BCDataStream()
     vds.write(raw_bytes)
     d['version'] = vds.read_int32()
+    d['timestamp'] = vds.read_int32() # tx timestamp
     n_vin = vds.read_compact_size()
     is_segwit = (n_vin == 0)
     if is_segwit:
@@ -685,6 +686,7 @@ class Transaction:
         self.is_partial_originally = True
         self._segwit_ser = None  # None means "don't know"
         self.output_info = None  # type: Optional[Dict[str, TxOutputHwInfo]]
+        self.timestamp = int(time.time())
 
     def update(self, raw):
         self.raw = raw
@@ -782,8 +784,10 @@ class Transaction:
         self._outputs = [TxOutput(x['type'], x['address'], x['value']) for x in d['outputs']]
         self.locktime = d['lockTime']
         self.version = d['version']
+        self.timestamp = d['timestamp']
         self.is_partial_originally = d['partial']
         self._segwit_ser = d['segwit_ser']
+
         return d
 
     @classmethod
@@ -1040,6 +1044,7 @@ class Transaction:
 
     def serialize_preimage(self, i):
         nVersion = int_to_hex(self.version, 4)
+        nTimestamp = int_to_hex(self.timestamp, 4)
         nHashType = int_to_hex(1, 4)
         nLocktime = int_to_hex(self.locktime, 4)
         inputs = self.inputs()
@@ -1059,7 +1064,8 @@ class Transaction:
         else:
             txins = var_int(len(inputs)) + ''.join(self.serialize_input(txin, self.get_preimage_script(txin) if i==k else '') for k, txin in enumerate(inputs))
             txouts = var_int(len(outputs)) + ''.join(self.serialize_output(o) for o in outputs)
-            preimage = nVersion + txins + txouts + nLocktime + nHashType
+            preimage = nVersion + nTimestamp + txins + txouts + nLocktime + nHashType
+
         return preimage
 
     def is_segwit(self, guess_for_address=False):
@@ -1093,9 +1099,9 @@ class Transaction:
             marker = '00'
             flag = '01'
             witness = ''.join(self.serialize_witness(x, estimate_size) for x in inputs)
-            return nVersion + marker + flag + txins + txouts + witness + nLocktime
+            return nVersion + nTimestamp + marker + flag + txins + txouts + witness + nLocktime
         else:
-            return nVersion + txins + txouts + nLocktime
+            return nVersion + nTimestamp + txins + txouts + nLocktime
 
     def txid(self):
         self.deserialize()
